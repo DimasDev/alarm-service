@@ -1,4 +1,4 @@
-package com.example.alarmservice.repository;
+package com.example.alarmservice.repository.projection;
 
 import com.example.alarmservice.model.AlarmSeverity;
 

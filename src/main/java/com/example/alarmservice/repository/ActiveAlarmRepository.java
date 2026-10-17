@@ -1,6 +1,7 @@
 package com.example.alarmservice.repository;
 
 import com.example.alarmservice.entity.ActiveAlarm;
+import com.example.alarmservice.repository.projection.AlarmSeverityCount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

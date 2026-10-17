@@ -16,6 +16,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AlarmService {
 
+    private static final String COLON = ":";
+    private static final String NAMESPACE = "namespace";
+    private static final String KEY = "key";
+
     private final AlarmHistoryRepository alarmHistoryRepository;
     private final ActiveAlarmRepository activeAlarmRepository;
     private final EntityManager entityManager;
@@ -23,7 +27,7 @@ public class AlarmService {
     @Transactional
     public boolean processAlarm(AlarmEventRequest request) {
         acquireLock(1, request.eventId());
-        acquireLock(2, request.elementId() + ":" + request.alarmCode());
+        acquireLock(2, request.elementId() + COLON + request.alarmCode());
 
         if (alarmHistoryRepository.existsByEventId(request.eventId())) {
             return false;
@@ -65,8 +69,8 @@ public class AlarmService {
 
     private void acquireLock(int namespace, String key) {
         entityManager.createNativeQuery("SELECT pg_advisory_xact_lock(:namespace, hashtext(:key))")
-                .setParameter("namespace", namespace)
-                .setParameter("key", key)
+                .setParameter(NAMESPACE, namespace)
+                .setParameter(KEY, key)
                 .getSingleResult();
     }
 

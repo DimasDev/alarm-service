@@ -6,7 +6,7 @@ import com.example.alarmservice.entity.AlarmHistory;
 import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.repository.ActiveAlarmRepository;
 import com.example.alarmservice.repository.AlarmHistoryRepository;
-import com.example.alarmservice.repository.AlarmSeverityCount;
+import com.example.alarmservice.repository.projection.AlarmSeverityCount;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,6 +23,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AlarmQueryService {
+
+    private static final String ID = "id";
 
     private final ActiveAlarmRepository activeAlarmRepository;
     private final AlarmHistoryRepository alarmHistoryRepository;
@@ -52,8 +54,8 @@ public class AlarmQueryService {
 
     public Page<AlarmHistoryResponse> getHistory(String elementId, int page, int size, Sort.Direction sortDirection, String sortBy) {
         Sort sort = Sort.by(sortDirection, sortBy);
-        if (!sortBy.equals("id")) {
-            sort = sort.and(Sort.by(Sort.Direction.DESC, "id"));
+        if (!sortBy.equals(ID)) {
+            sort = sort.and(Sort.by(Sort.Direction.DESC, ID));
         }
 
         Pageable pageable = PageRequest.of(page, size, sort);
