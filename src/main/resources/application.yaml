@@ -3,8 +3,8 @@ spring:
     name: alarm-service
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/alarmdb}
-    username: ${DB_USERNAME:alarmuser}
-    password: ${DB_PASSWORD}
+    username: ${POSTGRES_USER:alarmuser}
+    password: ${POSTGRES_PASSWORD}
 
   jpa:
     hibernate:
