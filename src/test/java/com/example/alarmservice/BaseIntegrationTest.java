@@ -5,6 +5,7 @@ import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.model.AlarmStatus;
 import com.example.alarmservice.repository.ActiveAlarmRepository;
 import com.example.alarmservice.repository.AlarmHistoryRepository;
+import com.example.alarmservice.repository.NotificationOutboxRepository;
 import com.example.alarmservice.service.AlarmService;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,9 @@ public abstract class BaseIntegrationTest {
     protected AlarmService alarmService;
 
     @Autowired
+    protected NotificationOutboxRepository outboxRepository;
+
+    @Autowired
     protected ActiveAlarmRepository activeRepository;
 
     @Autowired
@@ -56,6 +60,7 @@ public abstract class BaseIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        outboxRepository.deleteAll();
         activeRepository.deleteAll();
         historyRepository.deleteAll();
     }

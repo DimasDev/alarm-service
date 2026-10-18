@@ -2,11 +2,14 @@ package com.example.alarmservice.service;
 
 import com.example.alarmservice.BaseIntegrationTest;
 import com.example.alarmservice.dto.AlarmEventRequest;
+import com.example.alarmservice.entity.NotificationOutbox;
 import com.example.alarmservice.exception.UnknownAlarmException;
 import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.model.AlarmStatus;
+import com.example.alarmservice.model.NotificationStatus;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -145,5 +148,61 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    @Test
+    void shouldCreateOutboxRecordForNewAlarm() {
+
+        AlarmEventRequest request = new AlarmEventRequest(
+                "EVT-OUTBOX-1",
+                "BTS-100",
+                "CELL_DOWN",
+                AlarmSeverity.CRITICAL,
+                AlarmStatus.RAISED,
+                1791800000000L,
+                "Cell is not responding"
+        );
+
+        alarmService.processAlarm(request);
+
+        List<NotificationOutbox> notifications =
+                outboxRepository.findAll();
+
+        assertEquals(1, notifications.size());
+
+        NotificationOutbox notification = notifications.getFirst();
+
+        assertEquals("EVT-OUTBOX-1", notification.getEventId());
+        assertEquals("BTS-100", notification.getElementId());
+        assertEquals(NotificationStatus.PENDING, notification.getStatus());
+        assertEquals(0, notification.getAttempts());
+    }
+
+    @Test
+    void shouldNotCreateOutboxRecordForExistingAlarm() {
+
+        AlarmEventRequest request = new AlarmEventRequest(
+                "EVT-OUTBOX-1",
+                "BTS-100",
+                "CELL_DOWN",
+                AlarmSeverity.CRITICAL,
+                AlarmStatus.RAISED,
+                1791800000000L,
+                "Cell is not responding"
+        );
+
+        alarmService.processAlarm(request);
+
+        List<NotificationOutbox> notifications = outboxRepository.findAll();
+
+        assertEquals(1, notifications.size());
+        assertEquals("EVT-OUTBOX-1", notifications.getFirst().getEventId());
+
+        alarmService.processAlarm(request);
+
+        notifications = outboxRepository.findAll();
+
+        assertEquals(1, notifications.size());
+        assertEquals("EVT-OUTBOX-1", notifications.getFirst().getEventId());
     }
 }

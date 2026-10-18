@@ -18,4 +18,6 @@ public class ErrorMessages {
     public static final String MALFORMED_JSON = "Malformed JSON or unsupported field value: %s";
 
     public static final String GENERIC_VALIDATION_FAILURE = "Validation failure";
+
+    public static final String NOTIFICATION_SERIALIZATION_FAILED = "Failed to serialize notification payload";
 }
