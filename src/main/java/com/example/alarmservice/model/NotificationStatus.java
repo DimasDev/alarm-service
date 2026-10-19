@@ -1,8 +1,8 @@
 package com.example.alarmservice.model;
 
 public enum NotificationStatus {
-    PENDING,
-    PROCESSING,
-    DELIVERED,
-    FAILED
+    QUEUED,
+    QUEUE_FULL,
+    DISABLED,
+    DUPLICATE
 }

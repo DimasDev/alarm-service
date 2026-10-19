@@ -56,7 +56,6 @@ public class NotificationDispatcherTest {
         CountDownLatch release = new CountDownLatch(1);
 
         try {
-            // Первая задача занимает worker
             try (var reservation = dispatcher.tryReserve("BTS-100")) {
                 assertNotNull(reservation);
 
@@ -73,14 +72,12 @@ public class NotificationDispatcherTest {
 
             assertTrue(started.await(5, TimeUnit.SECONDS));
 
-            // Вторая задача резервирует последнее свободное место
             try (var reservation = dispatcher.tryReserve("BTS-100")) {
                 assertNotNull(reservation);
                 reservation.submit(() -> {
                 });
             }
 
-            // Все permits заняты — третья задача отклоняется
             assertNull(dispatcher.tryReserve("BTS-100"));
 
         } finally {

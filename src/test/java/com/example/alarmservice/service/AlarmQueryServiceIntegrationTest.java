@@ -21,16 +21,13 @@ public class AlarmQueryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturnOnlyActiveAlarms() {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.MAJOR, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, AlarmSeverity.MAJOR, 2000L);
 
         clear(EVENT_ID_3, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, 3000L);
 
-        List<ActiveAlarmResponse> result =
-                queryService.getActiveAlarms();
+        List<ActiveAlarmResponse> result = queryService.getActiveAlarms();
 
         assertEquals(1, result.size());
         assertEquals(ELEMENT_ID_1, result.getFirst().elementId());
@@ -38,16 +35,13 @@ public class AlarmQueryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldFilterActiveAlarmsByElement() {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.MAJOR, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, AlarmSeverity.MAJOR, 2000L);
 
         clear(EVENT_ID_3, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, 3000L);
 
-        List<ActiveAlarmResponse> result =
-                queryService.getActiveAlarmsByElement(ELEMENT_ID_2);
+        List<ActiveAlarmResponse> result = queryService.getActiveAlarmsByElement(ELEMENT_ID_2);
 
         assertEquals(1, result.size());
         assertEquals(ELEMENT_ID_2, result.getFirst().elementId());
@@ -55,14 +49,11 @@ public class AlarmQueryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturnActiveAlarmCountsBySeverity() throws Exception {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.CRITICAL, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, AlarmSeverity.CRITICAL, 2000L);
 
-        raise(EVENT_ID_3, ELEMENT_ID_3, ALARM_CODE_POWER_FAILURE,
-                AlarmSeverity.MAJOR, 3000L);
+        raise(EVENT_ID_3, ELEMENT_ID_3, ALARM_CODE_POWER_FAILURE, AlarmSeverity.MAJOR, 3000L);
 
         clear(EVENT_ID_4, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, 4000L);
 
@@ -75,11 +66,9 @@ public class AlarmQueryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturnCorrectHistory() {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.WARNING, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, AlarmSeverity.WARNING, 2000L);
 
         clear(EVENT_ID_3, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, 3000L);
 
@@ -89,11 +78,9 @@ public class AlarmQueryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldFilterHistoryByElementId() {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.WARNING, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_2, ALARM_CODE_HIGH_CPU, AlarmSeverity.WARNING, 2000L);
 
         Page<AlarmHistoryResponse> result = queryService.getHistory(ELEMENT_ID_1, 0, 10, Sort.Direction.DESC, ID);
         assertEquals(1, result.getTotalElements());
@@ -102,14 +89,11 @@ public class AlarmQueryServiceIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldSupportPaginationAndSorting() {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.INFO, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.INFO, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_1, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.WARNING, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_1, ALARM_CODE_HIGH_CPU, AlarmSeverity.WARNING, 2000L);
 
-        raise(EVENT_ID_3, ELEMENT_ID_1, ALARM_CODE_POWER_FAILURE,
-                AlarmSeverity.MAJOR, 3000L);
+        raise(EVENT_ID_3, ELEMENT_ID_1, ALARM_CODE_POWER_FAILURE, AlarmSeverity.MAJOR, 3000L);
 
         Page<AlarmHistoryResponse> result = queryService.getHistory(null, 0, 1, Sort.Direction.ASC, TIMESTAMP);
         assertEquals(3, result.getTotalElements());

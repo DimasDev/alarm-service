@@ -2,8 +2,10 @@ package com.example.alarmservice.service;
 
 import com.example.alarmservice.BaseIntegrationTest;
 import com.example.alarmservice.dto.AlarmEventRequest;
+import com.example.alarmservice.dto.AlarmIngestionResult;
 import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.model.AlarmStatus;
+import com.example.alarmservice.model.NotificationStatus;
 import com.example.alarmservice.notification.NotificationHttpClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -53,24 +55,21 @@ public class AlarmOrderingIntegrationTest extends BaseIntegrationTest {
             return null;
         }).when(httpClient).send(anyString(), anyString(), any());
 
-        assertTrue(alarmIngestionService.processAlarm(
-                alarm("ORDER-1", ELEMENT_ID_1)
-        ));
+        AlarmIngestionResult result = alarmIngestionService.processAlarm(alarm("ORDER-1", ELEMENT_ID_1));
+        assertTrue(result.created());
+        assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
-        assertTrue(alarmIngestionService.processAlarm(
-                alarm("ORDER-2", ELEMENT_ID_1)
-        ));
+        result = alarmIngestionService.processAlarm(alarm("ORDER-2", ELEMENT_ID_1));
+        assertTrue(result.created());
+        assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
-        assertTrue(alarmIngestionService.processAlarm(
-                alarm("ORDER-3", ELEMENT_ID_1)
-        ));
+        result = alarmIngestionService.processAlarm(alarm("ORDER-3", ELEMENT_ID_1));
+        assertTrue(result.created());
+        assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
         assertTrue(delivered.await(5, TimeUnit.SECONDS));
 
-        assertEquals(
-                List.of("ORDER-1", "ORDER-2", "ORDER-3"),
-                received
-        );
+        assertEquals(List.of("ORDER-1", "ORDER-2", "ORDER-3"), received);
     }
 
     @Test
@@ -98,20 +97,19 @@ public class AlarmOrderingIntegrationTest extends BaseIntegrationTest {
         ExecutorService executor = Executors.newFixedThreadPool(6);
 
         try {
-            List<Future<Boolean>> futures = new java.util.ArrayList<>();
+            List<Future<AlarmIngestionResult>> futures = new java.util.ArrayList<>();
 
             for (int i = 1; i <= 6; i++) {
                 int index = i;
 
-                futures.add(executor.submit(() ->
-                        alarmIngestionService.processAlarm(
-                                alarm("CONCURRENT-" + index, ELEMENT_ID_1)
-                        )
-                ));
+                futures.add(executor.submit(() -> alarmIngestionService.processAlarm(alarm("CONCURRENT-" + index, ELEMENT_ID_1))));
             }
 
-            for (Future<Boolean> future : futures) {
-                assertTrue(future.get(10, TimeUnit.SECONDS));
+            for (Future<AlarmIngestionResult> future : futures) {
+                AlarmIngestionResult result = future.get(10, TimeUnit.SECONDS);
+
+                assertTrue(result.created());
+                assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
             }
 
             assertTrue(delivered.await(10, TimeUnit.SECONDS));
@@ -140,18 +138,15 @@ public class AlarmOrderingIntegrationTest extends BaseIntegrationTest {
         }).when(httpClient).send(anyString(), anyString(), any());
 
         try {
-            assertTrue(alarmIngestionService.processAlarm(
-                    alarm("PARALLEL-1", ELEMENT_ID_1)
-            ));
+            AlarmIngestionResult result = alarmIngestionService.processAlarm(alarm("PARALLEL-1", ELEMENT_ID_1));
+            assertTrue(result.created());
+            assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
-            assertTrue(alarmIngestionService.processAlarm(
-                    alarm("PARALLEL-2", ELEMENT_ID_2)
-            ));
+            result = alarmIngestionService.processAlarm(alarm("PARALLEL-2", ELEMENT_ID_1));
+            assertTrue(result.created());
+            assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
-            assertTrue(
-                    bothStarted.await(5, TimeUnit.SECONDS),
-                    "Different elements should be processed concurrently"
-            );
+            assertTrue(bothStarted.await(5, TimeUnit.SECONDS), "Different elements should be processed concurrently");
 
         } finally {
             release.countDown();

@@ -1,9 +1,6 @@
 package com.example.alarmservice.controller;
 
-import com.example.alarmservice.dto.ActiveAlarmResponse;
-import com.example.alarmservice.dto.AlarmEventRequest;
-import com.example.alarmservice.dto.AlarmHistoryResponse;
-import com.example.alarmservice.dto.PageResponse;
+import com.example.alarmservice.dto.*;
 import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.service.AlarmIngestionService;
 import com.example.alarmservice.service.AlarmQueryService;
@@ -42,12 +39,12 @@ public class AlarmController {
     );
 
     @PostMapping
-    public ResponseEntity<Void> receiveAlarm(@Valid @RequestBody AlarmEventRequest request) {
-        boolean created = alarmIngestionService.processAlarm(request);
-        if (!created) {
-            return ResponseEntity.ok().build();
+    public ResponseEntity<AlarmIngestionResult> receiveAlarm(@Valid @RequestBody AlarmEventRequest request) {
+        AlarmIngestionResult result = alarmIngestionService.processAlarm(request);
+        if (!result.created()) {
+            return ResponseEntity.ok(result);
         }
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @GetMapping("/active")

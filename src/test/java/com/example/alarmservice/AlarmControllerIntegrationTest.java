@@ -37,14 +37,21 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(post(API_ALARMS)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.created").value(true))
+                .andExpect(jsonPath("$.notificationStatus").value("QUEUED"));
+        ;
         mockMvc.perform(post(API_ALARMS)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.created").value(false))
+                .andExpect(jsonPath("$.notificationStatus").value("DUPLICATE"));
+        ;
 
         assertEquals(1, historyRepository.count());
         assertEquals(1, activeRepository.count());
+
     }
 
     @Test
@@ -165,8 +172,7 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturn200AndActiveAlarms() throws Exception {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
         mockMvc.perform(get("/api/alarms/active"))
                 .andExpect(status().isOk())
@@ -177,8 +183,7 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturn200AndActiveAlarmsForSpecificElement() throws Exception {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
         mockMvc.perform(get("/api/alarms/elements/BTS-100"))
                 .andExpect(status().isOk())
@@ -188,8 +193,7 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturn200AndActiveAlarmCountsBySeverity() throws Exception {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
         mockMvc.perform(get("/api/alarms/statistics"))
                 .andExpect(status().isOk())
@@ -201,8 +205,7 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturn200AndAlarmHistory() throws Exception {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.CRITICAL, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.CRITICAL, 1000L);
 
         mockMvc.perform(get(API_ALARMS_HISTORY))
                 .andExpect(status().isOk())
@@ -213,14 +216,11 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
 
     @Test
     void shouldReturn200AndSupportPaginationAndSorting() throws Exception {
-        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN,
-                AlarmSeverity.INFO, 1000L);
+        raise(EVENT_ID_1, ELEMENT_ID_1, ALARM_CODE_CELL_DOWN, AlarmSeverity.INFO, 1000L);
 
-        raise(EVENT_ID_2, ELEMENT_ID_1, ALARM_CODE_HIGH_CPU,
-                AlarmSeverity.WARNING, 2000L);
+        raise(EVENT_ID_2, ELEMENT_ID_1, ALARM_CODE_HIGH_CPU, AlarmSeverity.WARNING, 2000L);
 
-        raise(EVENT_ID_3, ELEMENT_ID_1, ALARM_CODE_POWER_FAILURE,
-                AlarmSeverity.MAJOR, 3000L);
+        raise(EVENT_ID_3, ELEMENT_ID_1, ALARM_CODE_POWER_FAILURE, AlarmSeverity.MAJOR, 3000L);
 
         mockMvc.perform(get(API_ALARMS_HISTORY)
                         .param("page", "1")

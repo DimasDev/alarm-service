@@ -60,12 +60,7 @@ public abstract class BaseIntegrationTest {
         historyRepository.deleteAll();
     }
 
-    protected void raise(
-            String eventId,
-            String elementId,
-            String alarmCode,
-            AlarmSeverity severity,
-            long timestamp) {
+    protected void raise(String eventId, String elementId, String alarmCode, AlarmSeverity severity, long timestamp) {
 
         alarmIngestionService.processAlarm(new AlarmEventRequest(
                 eventId,
@@ -78,11 +73,7 @@ public abstract class BaseIntegrationTest {
         ));
     }
 
-    protected void clear(
-            String eventId,
-            String elementId,
-            String alarmCode,
-            long timestamp) {
+    protected void clear(String eventId, String elementId, String alarmCode, long timestamp) {
 
         alarmIngestionService.processAlarm(new AlarmEventRequest(
                 eventId,

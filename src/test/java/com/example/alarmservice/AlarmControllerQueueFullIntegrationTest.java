@@ -12,11 +12,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(properties = {
@@ -34,7 +36,7 @@ public class AlarmControllerQueueFullIntegrationTest extends BaseIntegrationTest
     private MockMvc mockMvc;
 
     @Test
-    void shouldReturn503AndNotPersistAlarmWhenNotificationQueueIsFull()
+    void shouldReturn201AndPersistAlarmWhenNotificationQueueIsFull()
             throws Exception {
 
         CountDownLatch started = new CountDownLatch(1);
@@ -68,18 +70,24 @@ public class AlarmControllerQueueFullIntegrationTest extends BaseIntegrationTest
             mockMvc.perform(post(API_ALARMS)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(firstRequest))
-                    .andExpect(status().isCreated());
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.created").value(true))
+                    .andExpect(jsonPath("$.notificationStatus").value("QUEUED"));
 
             assertTrue(started.await(5, TimeUnit.SECONDS));
 
             mockMvc.perform(post(API_ALARMS)
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(secondRequest))
-                    .andExpect(status().isServiceUnavailable());
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.created").value(true))
+                    .andExpect(jsonPath("$.notificationStatus").value("QUEUE_FULL"));
 
-            assertEquals(1, historyRepository.count());
+            assertEquals(2, historyRepository.count());
             assertEquals(1, activeRepository.count());
-            assertFalse(historyRepository.existsByEventId("QUEUE-2"));
+
+            assertTrue(historyRepository.existsByEventId("QUEUE-1"));
+            assertTrue(historyRepository.existsByEventId("QUEUE-2"));
 
         } finally {
             release.countDown();

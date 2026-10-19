@@ -2,9 +2,11 @@ package com.example.alarmservice.service;
 
 import com.example.alarmservice.BaseIntegrationTest;
 import com.example.alarmservice.dto.AlarmEventRequest;
+import com.example.alarmservice.dto.AlarmIngestionResult;
 import com.example.alarmservice.exception.UnknownAlarmException;
 import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.model.AlarmStatus;
+import com.example.alarmservice.model.NotificationStatus;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.*;
@@ -13,10 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
 
-    private AlarmEventRequest event(
-            String eventId,
-            AlarmStatus status,
-            AlarmSeverity severity) {
+    private AlarmEventRequest event(String eventId, AlarmStatus status, AlarmSeverity severity) {
 
         return new AlarmEventRequest(
                 eventId,
@@ -32,9 +31,9 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     void raisedEventShouldCreateHistoryAndActiveAlarm() {
 
-        boolean created = alarmIngestionService.processAlarm(event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL));
+        AlarmIngestionResult result = alarmIngestionService.processAlarm(event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL));
 
-        assertTrue(created);
+        assertTrue(result.created());
         assertEquals(1, historyRepository.count());
         assertEquals(1, activeRepository.count());
     }
@@ -70,8 +69,10 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
 
         var request = event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL);
 
-        assertTrue(alarmIngestionService.processAlarm(request));
-        assertFalse(alarmIngestionService.processAlarm(request));
+        assertTrue(alarmIngestionService.processAlarm(request).created());
+        AlarmIngestionResult result = alarmIngestionService.processAlarm(request);
+        assertFalse(result.created());
+        assertEquals(NotificationStatus.DUPLICATE, result.notificationStatus());
 
         assertEquals(1, historyRepository.count());
         assertEquals(1, activeRepository.count());
@@ -97,20 +98,20 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
         CountDownLatch start = new CountDownLatch(1);
 
         try {
-            Callable<Boolean> task = () -> {
+            Callable<AlarmIngestionResult> task = () -> {
                 start.await();
                 return alarmIngestionService.processAlarm(request);
             };
 
-            Future<Boolean> first = executor.submit(task);
-            Future<Boolean> second = executor.submit(task);
+            Future<AlarmIngestionResult> first = executor.submit(task);
+            Future<AlarmIngestionResult> second = executor.submit(task);
 
             start.countDown();
 
-            boolean result1 = first.get(10, TimeUnit.SECONDS);
-            boolean result2 = second.get(10, TimeUnit.SECONDS);
+            AlarmIngestionResult result1 = first.get(10, TimeUnit.SECONDS);
+            AlarmIngestionResult result2 = second.get(10, TimeUnit.SECONDS);
 
-            assertNotEquals(result1, result2);
+            assertNotEquals(result1.created(), result2.created());
             assertEquals(1, historyRepository.count());
             assertEquals(1, activeRepository.count());
 

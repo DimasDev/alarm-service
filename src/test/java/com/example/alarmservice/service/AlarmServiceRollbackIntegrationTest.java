@@ -21,7 +21,7 @@ public class AlarmServiceRollbackIntegrationTest extends BaseIntegrationTest {
     private JsonMapper objectMapper;
 
     @Test
-    void shouldNotPersistAlarmWhenNotificationSerializationFails() {
+    void shouldPersistAlarmWhenNotificationSerializationFails() {
 
         AlarmEventRequest request = new AlarmEventRequest(
                 "EVT-ROLLBACK-1",
@@ -33,19 +33,15 @@ public class AlarmServiceRollbackIntegrationTest extends BaseIntegrationTest {
                 "Test alarm"
         );
 
-        when(objectMapper.writeValueAsString(any()))
-                .thenThrow(new JacksonException("Serialization failed") {
-                });
+        when(objectMapper.writeValueAsString(any())).thenThrow(new JacksonException("Serialization failed") {
+        });
 
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
                 () -> alarmIngestionService.processAlarm(request)
         );
 
-        assertEquals(
-                NOTIFICATION_SERIALIZATION_FAILED,
-                exception.getMessage()
-        );
+        assertEquals(NOTIFICATION_SERIALIZATION_FAILED, exception.getMessage());
 
         assertEquals(0, historyRepository.count());
         assertEquals(0, activeRepository.count());
