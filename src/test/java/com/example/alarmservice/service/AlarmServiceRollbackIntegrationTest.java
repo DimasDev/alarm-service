@@ -21,7 +21,7 @@ public class AlarmServiceRollbackIntegrationTest extends BaseIntegrationTest {
     private JsonMapper objectMapper;
 
     @Test
-    void shouldRollbackTransactionWhenNotificationSerializationFails() {
+    void shouldNotPersistAlarmWhenNotificationSerializationFails() {
 
         AlarmEventRequest request = new AlarmEventRequest(
                 "EVT-ROLLBACK-1",
@@ -39,7 +39,7 @@ public class AlarmServiceRollbackIntegrationTest extends BaseIntegrationTest {
 
         IllegalStateException exception = assertThrows(
                 IllegalStateException.class,
-                () -> alarmService.processAlarm(request)
+                () -> alarmIngestionService.processAlarm(request)
         );
 
         assertEquals(
@@ -49,6 +49,5 @@ public class AlarmServiceRollbackIntegrationTest extends BaseIntegrationTest {
 
         assertEquals(0, historyRepository.count());
         assertEquals(0, activeRepository.count());
-        assertEquals(0, outboxRepository.count());
     }
 }

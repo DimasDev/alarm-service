@@ -2,14 +2,11 @@ package com.example.alarmservice.service;
 
 import com.example.alarmservice.BaseIntegrationTest;
 import com.example.alarmservice.dto.AlarmEventRequest;
-import com.example.alarmservice.entity.NotificationOutbox;
 import com.example.alarmservice.exception.UnknownAlarmException;
 import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.model.AlarmStatus;
-import com.example.alarmservice.model.NotificationStatus;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.concurrent.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,10 +32,7 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     void raisedEventShouldCreateHistoryAndActiveAlarm() {
 
-        boolean created = alarmService.processAlarm(
-                event(EVENT_ID_1, AlarmStatus.RAISED,
-                        AlarmSeverity.CRITICAL)
-        );
+        boolean created = alarmIngestionService.processAlarm(event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL));
 
         assertTrue(created);
         assertEquals(1, historyRepository.count());
@@ -48,23 +42,14 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     void repeatedRaisedShouldUpdateActiveAlarm() {
 
-        alarmService.processAlarm(
-                event(EVENT_ID_1, AlarmStatus.RAISED,
-                        AlarmSeverity.CRITICAL)
-        );
+        alarmIngestionService.processAlarm(event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL));
 
-        alarmService.processAlarm(
-                event(EVENT_ID_2, AlarmStatus.RAISED,
-                        AlarmSeverity.MAJOR)
-        );
+        alarmIngestionService.processAlarm(event(EVENT_ID_2, AlarmStatus.RAISED, AlarmSeverity.MAJOR));
 
         assertEquals(2, historyRepository.count());
         assertEquals(1, activeRepository.count());
 
-        var active = activeRepository
-                .findByElementIdAndAlarmCode(
-                        ELEMENT_ID_1, ALARM_CODE_CELL_DOWN
-                ).orElseThrow();
+        var active = activeRepository.findByElementIdAndAlarmCode(ELEMENT_ID_1, ALARM_CODE_CELL_DOWN).orElseThrow();
 
         assertEquals(AlarmSeverity.MAJOR, active.getSeverity());
     }
@@ -72,15 +57,9 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     void clearedShouldRemoveActiveButKeepHistory() {
 
-        alarmService.processAlarm(
-                event(EVENT_ID_1, AlarmStatus.RAISED,
-                        AlarmSeverity.CRITICAL)
-        );
+        alarmIngestionService.processAlarm(event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL));
 
-        alarmService.processAlarm(
-                event(EVENT_ID_2, AlarmStatus.CLEARED,
-                        AlarmSeverity.CRITICAL)
-        );
+        alarmIngestionService.processAlarm(event(EVENT_ID_2, AlarmStatus.CLEARED, AlarmSeverity.CRITICAL));
 
         assertEquals(2, historyRepository.count());
         assertEquals(0, activeRepository.count());
@@ -89,13 +68,10 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
     @Test
     void duplicateEventShouldNotBeProcessedTwice() {
 
-        var request = event(
-                EVENT_ID_1, AlarmStatus.RAISED,
-                AlarmSeverity.CRITICAL
-        );
+        var request = event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL);
 
-        assertTrue(alarmService.processAlarm(request));
-        assertFalse(alarmService.processAlarm(request));
+        assertTrue(alarmIngestionService.processAlarm(request));
+        assertFalse(alarmIngestionService.processAlarm(request));
 
         assertEquals(1, historyRepository.count());
         assertEquals(1, activeRepository.count());
@@ -106,23 +82,16 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
 
         assertThrows(
                 UnknownAlarmException.class,
-                () -> alarmService.processAlarm(
-                        event(EVENT_ID_1, AlarmStatus.CLEARED,
-                                AlarmSeverity.CRITICAL)
-                )
+                () -> alarmIngestionService.processAlarm(event(EVENT_ID_1, AlarmStatus.CLEARED, AlarmSeverity.CRITICAL))
         );
 
         assertEquals(0, historyRepository.count());
     }
 
     @Test
-    void concurrentDuplicateEventsShouldBeProcessedOnce()
-            throws Exception {
+    void concurrentDuplicateEventsShouldBeProcessedOnce() throws Exception {
 
-        var request = event(
-                EVENT_ID_1, AlarmStatus.RAISED,
-                AlarmSeverity.CRITICAL
-        );
+        var request = event(EVENT_ID_1, AlarmStatus.RAISED, AlarmSeverity.CRITICAL);
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         CountDownLatch start = new CountDownLatch(1);
@@ -130,7 +99,7 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
         try {
             Callable<Boolean> task = () -> {
                 start.await();
-                return alarmService.processAlarm(request);
+                return alarmIngestionService.processAlarm(request);
             };
 
             Future<Boolean> first = executor.submit(task);
@@ -148,61 +117,5 @@ public class AlarmServiceIntegrationTest extends BaseIntegrationTest {
         } finally {
             executor.shutdownNow();
         }
-    }
-
-    @Test
-    void shouldCreateOutboxRecordForNewAlarm() {
-
-        AlarmEventRequest request = new AlarmEventRequest(
-                "EVT-OUTBOX-1",
-                "BTS-100",
-                "CELL_DOWN",
-                AlarmSeverity.CRITICAL,
-                AlarmStatus.RAISED,
-                1791800000000L,
-                "Cell is not responding"
-        );
-
-        alarmService.processAlarm(request);
-
-        List<NotificationOutbox> notifications =
-                outboxRepository.findAll();
-
-        assertEquals(1, notifications.size());
-
-        NotificationOutbox notification = notifications.getFirst();
-
-        assertEquals("EVT-OUTBOX-1", notification.getEventId());
-        assertEquals("BTS-100", notification.getElementId());
-        assertEquals(NotificationStatus.PENDING, notification.getStatus());
-        assertEquals(0, notification.getAttempts());
-    }
-
-    @Test
-    void shouldNotCreateOutboxRecordForExistingAlarm() {
-
-        AlarmEventRequest request = new AlarmEventRequest(
-                "EVT-OUTBOX-1",
-                "BTS-100",
-                "CELL_DOWN",
-                AlarmSeverity.CRITICAL,
-                AlarmStatus.RAISED,
-                1791800000000L,
-                "Cell is not responding"
-        );
-
-        alarmService.processAlarm(request);
-
-        List<NotificationOutbox> notifications = outboxRepository.findAll();
-
-        assertEquals(1, notifications.size());
-        assertEquals("EVT-OUTBOX-1", notifications.getFirst().getEventId());
-
-        alarmService.processAlarm(request);
-
-        notifications = outboxRepository.findAll();
-
-        assertEquals(1, notifications.size());
-        assertEquals("EVT-OUTBOX-1", notifications.getFirst().getEventId());
     }
 }

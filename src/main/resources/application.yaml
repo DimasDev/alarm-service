@@ -19,5 +19,6 @@ notification:
   enabled: true
   workers: 4
   queue-capacity: 100
-  batch-size: 100
-  poll-interval-ms: 1000
+  endpoint: http://localhost:8081/external/notifications
+  connect-timeout-ms: 2000
+  read-timeout-ms: 5000

@@ -3,15 +3,15 @@ package com.example.alarmservice.controller;
 import com.example.alarmservice.dto.ActiveAlarmResponse;
 import com.example.alarmservice.dto.AlarmEventRequest;
 import com.example.alarmservice.dto.AlarmHistoryResponse;
+import com.example.alarmservice.dto.PageResponse;
 import com.example.alarmservice.model.AlarmSeverity;
+import com.example.alarmservice.service.AlarmIngestionService;
 import com.example.alarmservice.service.AlarmQueryService;
-import com.example.alarmservice.service.AlarmService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +29,7 @@ import static com.example.alarmservice.exception.ErrorMessages.*;
 @RequiredArgsConstructor
 public class AlarmController {
 
-    private final AlarmService alarmService;
+    private final AlarmIngestionService alarmIngestionService;
     private final AlarmQueryService alarmQueryService;
 
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
@@ -43,7 +43,7 @@ public class AlarmController {
 
     @PostMapping
     public ResponseEntity<Void> receiveAlarm(@Valid @RequestBody AlarmEventRequest request) {
-        boolean created = alarmService.processAlarm(request);
+        boolean created = alarmIngestionService.processAlarm(request);
         if (!created) {
             return ResponseEntity.ok().build();
         }
@@ -66,14 +66,14 @@ public class AlarmController {
     }
 
     @GetMapping("/history")
-    public Page<AlarmHistoryResponse> getHistory(@RequestParam(required = false) String elementId,
-                                                 @RequestParam(defaultValue = "0")
-                                                 @Min(value = 0, message = PAGE_NEGATIVE) int page,
-                                                 @RequestParam(defaultValue = "20")
-                                                 @Min(value = 1, message = SIZE_INVALID)
-                                                 @Max(value = 100, message = SIZE_INVALID) int size,
-                                                 @RequestParam(defaultValue = "id") String sortBy,
-                                                 @RequestParam(defaultValue = "desc") String direction) {
+    public PageResponse<AlarmHistoryResponse> getHistory(@RequestParam(required = false) String elementId,
+                                                         @RequestParam(defaultValue = "0")
+                                                         @Min(value = 0, message = PAGE_NEGATIVE) int page,
+                                                         @RequestParam(defaultValue = "20")
+                                                         @Min(value = 1, message = SIZE_INVALID)
+                                                         @Max(value = 100, message = SIZE_INVALID) int size,
+                                                         @RequestParam(defaultValue = "id") String sortBy,
+                                                         @RequestParam(defaultValue = "desc") String direction) {
         if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, SORT_INVALID.formatted(sortBy));
         }
@@ -85,6 +85,6 @@ public class AlarmController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, DIRECTION_INVALID);
         }
 
-        return alarmQueryService.getHistory(elementId, page, size, sortDirection, sortBy);
+        return PageResponse.from(alarmQueryService.getHistory(elementId, page, size, sortDirection, sortBy));
     }
 }

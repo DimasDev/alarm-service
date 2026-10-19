@@ -8,14 +8,14 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NotificationDispatcherTest {
 
     @Test
     void shouldProcessTasksForSameElementSequentially() throws Exception {
-        NotificationProperties properties = new NotificationProperties(true, 2, 10, 10, 1000);
+        NotificationProperties properties = new NotificationProperties(true, 2, 10,
+                "http://localhost:8081/external/notifications", 2000, 5000);
         NotificationDispatcher dispatcher = new NotificationDispatcher(properties);
 
         try {
@@ -24,15 +24,67 @@ public class NotificationDispatcherTest {
 
             for (int i = 1; i <= 3; i++) {
                 int value = i;
-                assertTrue(dispatcher.dispatch("BTS-100", () -> {
-                    results.add(value);
-                    latch.countDown();
-                }));
+                try (var reservation = dispatcher.tryReserve("BTS-100")) {
+                    assertNotNull(reservation);
+
+                    reservation.submit(() -> {
+                        results.add(value);
+                        latch.countDown();
+                    });
+                }
             }
 
             assertTrue(latch.await(5, TimeUnit.SECONDS));
             assertEquals(List.of(1, 2, 3), results);
         } finally {
+            dispatcher.shutdown();
+        }
+    }
+
+    @Test
+    void shouldRejectTaskWhenQueueIsFull() throws Exception {
+
+        NotificationProperties properties = new NotificationProperties(
+                true, 1, 2,
+                "http://localhost:8081/external/notifications",
+                2000, 5000
+        );
+
+        NotificationDispatcher dispatcher = new NotificationDispatcher(properties);
+
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
+        try {
+            // Первая задача занимает worker
+            try (var reservation = dispatcher.tryReserve("BTS-100")) {
+                assertNotNull(reservation);
+
+                reservation.submit(() -> {
+                    started.countDown();
+
+                    try {
+                        release.await();
+                    } catch (InterruptedException ex) {
+                        Thread.currentThread().interrupt();
+                    }
+                });
+            }
+
+            assertTrue(started.await(5, TimeUnit.SECONDS));
+
+            // Вторая задача резервирует последнее свободное место
+            try (var reservation = dispatcher.tryReserve("BTS-100")) {
+                assertNotNull(reservation);
+                reservation.submit(() -> {
+                });
+            }
+
+            // Все permits заняты — третья задача отклоняется
+            assertNull(dispatcher.tryReserve("BTS-100"));
+
+        } finally {
+            release.countDown();
             dispatcher.shutdown();
         }
     }

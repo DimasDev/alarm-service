@@ -5,8 +5,7 @@ import com.example.alarmservice.model.AlarmSeverity;
 import com.example.alarmservice.model.AlarmStatus;
 import com.example.alarmservice.repository.ActiveAlarmRepository;
 import com.example.alarmservice.repository.AlarmHistoryRepository;
-import com.example.alarmservice.repository.NotificationOutboxRepository;
-import com.example.alarmservice.service.AlarmService;
+import com.example.alarmservice.service.AlarmIngestionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,10 +33,7 @@ public abstract class BaseIntegrationTest {
     protected static final String API_ALARMS_HISTORY = "/api/alarms/history";
 
     @Autowired
-    protected AlarmService alarmService;
-
-    @Autowired
-    protected NotificationOutboxRepository outboxRepository;
+    protected AlarmIngestionService alarmIngestionService;
 
     @Autowired
     protected ActiveAlarmRepository activeRepository;
@@ -60,7 +56,6 @@ public abstract class BaseIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        outboxRepository.deleteAll();
         activeRepository.deleteAll();
         historyRepository.deleteAll();
     }
@@ -72,7 +67,7 @@ public abstract class BaseIntegrationTest {
             AlarmSeverity severity,
             long timestamp) {
 
-        alarmService.processAlarm(new AlarmEventRequest(
+        alarmIngestionService.processAlarm(new AlarmEventRequest(
                 eventId,
                 elementId,
                 alarmCode,
@@ -89,7 +84,7 @@ public abstract class BaseIntegrationTest {
             String alarmCode,
             long timestamp) {
 
-        alarmService.processAlarm(new AlarmEventRequest(
+        alarmIngestionService.processAlarm(new AlarmEventRequest(
                 eventId,
                 elementId,
                 alarmCode,

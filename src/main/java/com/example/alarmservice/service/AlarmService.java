@@ -23,7 +23,6 @@ public class AlarmService {
     private final AlarmHistoryRepository alarmHistoryRepository;
     private final ActiveAlarmRepository activeAlarmRepository;
     private final EntityManager entityManager;
-    private final NotificationOutboxService notificationOutboxService;
 
     @Transactional
     public boolean processAlarm(AlarmEventRequest request) {
@@ -64,8 +63,6 @@ public class AlarmService {
         } else {
             activeAlarmRepository.delete(active.orElseThrow());
         }
-
-        notificationOutboxService.saveNotification(request);
 
         return true;
     }
