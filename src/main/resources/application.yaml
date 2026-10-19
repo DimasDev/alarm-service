@@ -19,6 +19,6 @@ notification:
   enabled: true
   workers: 4
   queue-capacity: 100
-  endpoint: http://localhost:8081/external/notifications
+  endpoint: ${NOTIFICATION_ENDPOINT:http://localhost:8080/mock/notifications}
   connect-timeout-ms: 2000
   read-timeout-ms: 5000
