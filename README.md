@@ -19,7 +19,9 @@ git clone https://github.com/DimasDev/alarm-service.git
 
 cd alarm-service
 
-cp .env.example .env 
+cp .env.example .env
+
+#don't forget to change a password in .env
 
 docker compose up --build -d
 ```
@@ -35,7 +37,15 @@ configure `DB_URL=jdbc:postgresql://localhost:5432/alarmdb` with the same creden
 then run `./mvnw spring-boot:run` 
 (or `mvn spring-boot:run` if the repository does not include the Maven wrapper).
 
-## Sample Requests
+## Postman Collection
+
+A Postman collection is available at
+`postman/Alarm_Service_Collection.postman_collection.json`.
+
+Import the collection into Postman and run the requests
+against `http://localhost:8080`.
+
+## CURL Sample Requests
 
 ### Submit an alarm
 

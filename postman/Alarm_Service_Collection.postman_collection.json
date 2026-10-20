@@ -1,0 +1,146 @@
+{
+  "info": {
+    "_postman_id": "6d9e4106-ac3e-481a-871d-a60c43d44425",
+    "name": "Alarm Service Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "10514436"
+  },
+  "item": [
+    {
+      "name": "receiveAlarm",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"eventId\": \"EVT-1\",\r\n  \"elementId\": \"BTS-100\",\r\n  \"alarmCode\": \"CELL_DOWN\",\r\n  \"severity\": \"CRITICAL\",\r\n  \"status\": \"RAISED\",\r\n  \"timestamp\": 1791800000000,\r\n  \"description\": \"Cell is not responding\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/alarms",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "alarms"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "allActiveAlarms",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/alarms/active",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "alarms",
+            "active"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "statistics",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/alarms/statistics",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "alarms",
+            "statistics"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "activeAlarmsByElement",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/alarms/elements/{element_id}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "alarms",
+            "elements",
+            "{element_id}"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "history",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/alarms/history?elementId={element_id}&page={page_num}&size={page_size}&sortBy={field}&direction={asc/desc}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "alarms",
+            "history"
+          ],
+          "query": [
+            {
+              "key": "elementId",
+              "value": "{element_id}"
+            },
+            {
+              "key": "page",
+              "value": "{page_num}"
+            },
+            {
+              "key": "size",
+              "value": "{page_size}"
+            },
+            {
+              "key": "sortBy",
+              "value": "{field}"
+            },
+            {
+              "key": "direction",
+              "value": "{asc/desc}"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
