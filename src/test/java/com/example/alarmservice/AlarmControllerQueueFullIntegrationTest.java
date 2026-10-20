@@ -1,5 +1,6 @@
 package com.example.alarmservice;
 
+import com.example.alarmservice.model.NotificationStatus;
 import com.example.alarmservice.notification.NotificationHttpClient;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class AlarmControllerQueueFullIntegrationTest extends BaseIntegrationTest {
 
+    public static final String QUEUE_1 = "QUEUE-1";
+    public static final String QUEUE_2 = "QUEUE-2";
     @MockitoBean
     private NotificationHttpClient httpClient;
 
@@ -64,7 +67,7 @@ public class AlarmControllerQueueFullIntegrationTest extends BaseIntegrationTest
                 }
                 """;
 
-        String secondRequest = firstRequest.replace("QUEUE-1", "QUEUE-2");
+        String secondRequest = firstRequest.replace(QUEUE_1, QUEUE_2);
 
         try {
             mockMvc.perform(post(API_ALARMS)
@@ -72,7 +75,7 @@ public class AlarmControllerQueueFullIntegrationTest extends BaseIntegrationTest
                             .content(firstRequest))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.created").value(true))
-                    .andExpect(jsonPath("$.notificationStatus").value("QUEUED"));
+                    .andExpect(jsonPath("$.notificationStatus").value(NotificationStatus.QUEUED.name()));
 
             assertTrue(started.await(5, TimeUnit.SECONDS));
 
@@ -81,13 +84,13 @@ public class AlarmControllerQueueFullIntegrationTest extends BaseIntegrationTest
                             .content(secondRequest))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.created").value(true))
-                    .andExpect(jsonPath("$.notificationStatus").value("QUEUE_FULL"));
+                    .andExpect(jsonPath("$.notificationStatus").value(NotificationStatus.QUEUE_FULL.name()));
 
             assertEquals(2, historyRepository.count());
             assertEquals(1, activeRepository.count());
 
-            assertTrue(historyRepository.existsByEventId("QUEUE-1"));
-            assertTrue(historyRepository.existsByEventId("QUEUE-2"));
+            assertTrue(historyRepository.existsByEventId(QUEUE_1));
+            assertTrue(historyRepository.existsByEventId(QUEUE_2));
 
         } finally {
             release.countDown();

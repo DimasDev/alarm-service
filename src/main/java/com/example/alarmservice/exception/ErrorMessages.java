@@ -20,4 +20,12 @@ public class ErrorMessages {
     public static final String GENERIC_VALIDATION_FAILURE = "Validation failure";
 
     public static final String NOTIFICATION_SERIALIZATION_FAILED = "Failed to serialize notification payload";
+
+    public static final String RESERVATION_ALREADY_USED = "Reservation already used";
+
+    public static final String NOTIFICATION_TASK_FAILED = "Notification task failed";
+
+    public static final String NOTIFICATION_ENDPOINT_RETURNED = "Notification endpoint returned HTTP %s";
+
+    public static final String TIMED_OUT_WAITING_FOR_RELEASE = "Timed out waiting for release";
 }

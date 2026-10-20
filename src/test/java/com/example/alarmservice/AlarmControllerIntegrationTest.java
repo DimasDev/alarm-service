@@ -1,6 +1,8 @@
 package com.example.alarmservice;
 
 import com.example.alarmservice.model.AlarmSeverity;
+import com.example.alarmservice.model.AlarmStatus;
+import com.example.alarmservice.model.NotificationStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -39,14 +41,14 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
                         .content(requestBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.created").value(true))
-                .andExpect(jsonPath("$.notificationStatus").value("QUEUED"));
+                .andExpect(jsonPath("$.notificationStatus").value(NotificationStatus.QUEUED.name()));
         ;
         mockMvc.perform(post(API_ALARMS)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.created").value(false))
-                .andExpect(jsonPath("$.notificationStatus").value("DUPLICATE"));
+                .andExpect(jsonPath("$.notificationStatus").value(NotificationStatus.DUPLICATE.name()));
         ;
 
         assertEquals(1, historyRepository.count());
@@ -211,7 +213,7 @@ public class AlarmControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content.length()").value(1))
-                .andExpect(jsonPath("$.content[0].status").value("RAISED"));
+                .andExpect(jsonPath("$.content[0].status").value(AlarmStatus.RAISED.name()));
     }
 
     @Test

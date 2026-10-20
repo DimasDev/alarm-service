@@ -9,6 +9,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 
+import static com.example.alarmservice.exception.ErrorMessages.NOTIFICATION_ENDPOINT_RETURNED;
+
 @Component
 public class NotificationHttpClient {
 
@@ -31,7 +33,7 @@ public class NotificationHttpClient {
         HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            throw new IOException("Notification endpoint returned HTTP " + response.statusCode());
+            throw new IOException(NOTIFICATION_ENDPOINT_RETURNED.formatted(response.statusCode()));
         }
     }
 }

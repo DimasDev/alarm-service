@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.*;
 
+import static com.example.alarmservice.exception.ErrorMessages.NOTIFICATION_TASK_FAILED;
+import static com.example.alarmservice.exception.ErrorMessages.RESERVATION_ALREADY_USED;
+
 @Component
 @Slf4j
 public class NotificationDispatcher {
@@ -62,7 +65,7 @@ public class NotificationDispatcher {
             try {
                 task.run();
             } catch (Exception exception) {
-                log.error("Notification task failed", exception);
+                log.error(NOTIFICATION_TASK_FAILED, exception);
             } finally {
                 capacity.release();
             }
@@ -91,7 +94,7 @@ public class NotificationDispatcher {
 
         public void submit(Runnable task) {
             if (!active) {
-                throw new IllegalStateException("Reservation already used");
+                throw new IllegalStateException(RESERVATION_ALREADY_USED);
             }
             enqueue(elementId, task);
             active = false;

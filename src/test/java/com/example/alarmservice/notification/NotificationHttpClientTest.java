@@ -9,6 +9,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class NotificationHttpClientTest {
 
+    public static final String EVT_HTTP_TEST = "EVT-HTTP-TEST";
+
     @Test
     void shouldSendNotificationSuccessfully() throws Exception {
 
@@ -24,10 +26,10 @@ public class NotificationHttpClientTest {
                       "status": "RAISED"
                     }
                     """;
-            client.send("EVT-HTTP-TEST", payload, Duration.ofSeconds(5));
+            client.send(EVT_HTTP_TEST, payload, Duration.ofSeconds(5));
 
             assertEquals(1, receiver.getReceivedEvents().size());
-            assertTrue(receiver.getReceivedEvents().getFirst().contains("EVT-HTTP-TEST"));
+            assertTrue(receiver.getReceivedEvents().getFirst().contains(EVT_HTTP_TEST));
         }
     }
 }

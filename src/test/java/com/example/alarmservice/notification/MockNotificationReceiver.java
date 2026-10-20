@@ -9,13 +9,15 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MockNotificationReceiver implements AutoCloseable {
+
+    public static final String EXTERNAL_NOTIFICATIONS = "/external/notifications";
     private final HttpServer server;
     private final List<String> receivedEvents = new CopyOnWriteArrayList<>();
 
     public MockNotificationReceiver() throws IOException {
 
         server = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
-        server.createContext("/external/notifications", exchange -> {
+        server.createContext(EXTERNAL_NOTIFICATIONS, exchange -> {
             if (!"POST".equals(exchange.getRequestMethod())) {
                 exchange.sendResponseHeaders(405, -1);
                 exchange.close();
@@ -33,7 +35,7 @@ public class MockNotificationReceiver implements AutoCloseable {
     }
 
     public String getUrl() {
-        return "http://localhost:" + server.getAddress().getPort() + "/external/notifications";
+        return "http://localhost:" + server.getAddress().getPort() + EXTERNAL_NOTIFICATIONS;
     }
 
     public List<String> getReceivedEvents() {

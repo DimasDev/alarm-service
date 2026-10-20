@@ -20,7 +20,7 @@ public abstract class BaseIntegrationTest {
     protected static final String EVENT_ID_2 = "EVT-2";
     protected static final String EVENT_ID_3 = "EVT-3";
     protected static final String EVENT_ID_4 = "EVT-4";
-    protected static final String ELEMENT_ID_1 = "BTS-100";
+    public static final String ELEMENT_ID_1 = "BTS-100";
     protected static final String ELEMENT_ID_2 = "BTS-200";
     protected static final String ELEMENT_ID_3 = "BTS-300";
     protected static final String ALARM_CODE_CELL_DOWN = "CELL_DOWN";

@@ -14,6 +14,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 
+import static com.example.alarmservice.exception.ErrorMessages.NOTIFICATION_SERIALIZATION_FAILED;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -60,7 +62,7 @@ public class AlarmIngestionService {
         try {
             return objectMapper.writeValueAsString(request);
         } catch (JacksonException exception) {
-            throw new IllegalStateException("Failed to serialize notification payload", exception);
+            throw new IllegalStateException(NOTIFICATION_SERIALIZATION_FAILED, exception);
         }
     }
 

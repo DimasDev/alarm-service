@@ -8,14 +8,17 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.example.alarmservice.BaseIntegrationTest.ELEMENT_ID_1;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NotificationDispatcherTest {
 
+    public static final String URL = "http://localhost:8081/external/notifications";
+
     @Test
     void shouldProcessTasksForSameElementSequentially() throws Exception {
         NotificationProperties properties = new NotificationProperties(true, 2, 10,
-                "http://localhost:8081/external/notifications", 2000, 5000);
+                URL, 2000, 5000);
         NotificationDispatcher dispatcher = new NotificationDispatcher(properties);
 
         try {
@@ -24,7 +27,7 @@ public class NotificationDispatcherTest {
 
             for (int i = 1; i <= 3; i++) {
                 int value = i;
-                try (var reservation = dispatcher.tryReserve("BTS-100")) {
+                try (var reservation = dispatcher.tryReserve(ELEMENT_ID_1)) {
                     assertNotNull(reservation);
 
                     reservation.submit(() -> {
@@ -46,7 +49,7 @@ public class NotificationDispatcherTest {
 
         NotificationProperties properties = new NotificationProperties(
                 true, 1, 2,
-                "http://localhost:8081/external/notifications",
+                URL,
                 2000, 5000
         );
 
@@ -56,7 +59,7 @@ public class NotificationDispatcherTest {
         CountDownLatch release = new CountDownLatch(1);
 
         try {
-            try (var reservation = dispatcher.tryReserve("BTS-100")) {
+            try (var reservation = dispatcher.tryReserve(ELEMENT_ID_1)) {
                 assertNotNull(reservation);
 
                 reservation.submit(() -> {
@@ -72,13 +75,13 @@ public class NotificationDispatcherTest {
 
             assertTrue(started.await(5, TimeUnit.SECONDS));
 
-            try (var reservation = dispatcher.tryReserve("BTS-100")) {
+            try (var reservation = dispatcher.tryReserve(ELEMENT_ID_1)) {
                 assertNotNull(reservation);
                 reservation.submit(() -> {
                 });
             }
 
-            assertNull(dispatcher.tryReserve("BTS-100"));
+            assertNull(dispatcher.tryReserve(ELEMENT_ID_1));
 
         } finally {
             release.countDown();

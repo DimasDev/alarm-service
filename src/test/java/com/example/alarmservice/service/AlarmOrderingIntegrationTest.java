@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.example.alarmservice.exception.ErrorMessages.TIMED_OUT_WAITING_FOR_RELEASE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,6 +28,10 @@ import static org.mockito.Mockito.doAnswer;
         "notification.queue-capacity=10"
 })
 public class AlarmOrderingIntegrationTest extends BaseIntegrationTest {
+
+    private static final String ORDER_1 = "ORDER-1";
+    private static final String ORDER_2 = "ORDER-2";
+    private static final String ORDER_3 = "ORDER-3";
 
     @MockitoBean
     private NotificationHttpClient httpClient;
@@ -55,21 +60,21 @@ public class AlarmOrderingIntegrationTest extends BaseIntegrationTest {
             return null;
         }).when(httpClient).send(anyString(), anyString(), any());
 
-        AlarmIngestionResult result = alarmIngestionService.processAlarm(alarm("ORDER-1", ELEMENT_ID_1));
+        AlarmIngestionResult result = alarmIngestionService.processAlarm(alarm(ORDER_1, ELEMENT_ID_1));
         assertTrue(result.created());
         assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
-        result = alarmIngestionService.processAlarm(alarm("ORDER-2", ELEMENT_ID_1));
+        result = alarmIngestionService.processAlarm(alarm(ORDER_2, ELEMENT_ID_1));
         assertTrue(result.created());
         assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
-        result = alarmIngestionService.processAlarm(alarm("ORDER-3", ELEMENT_ID_1));
+        result = alarmIngestionService.processAlarm(alarm(ORDER_3, ELEMENT_ID_1));
         assertTrue(result.created());
         assertEquals(NotificationStatus.QUEUED, result.notificationStatus());
 
         assertTrue(delivered.await(5, TimeUnit.SECONDS));
 
-        assertEquals(List.of("ORDER-1", "ORDER-2", "ORDER-3"), received);
+        assertEquals(List.of(ORDER_1, ORDER_2, ORDER_3), received);
     }
 
     @Test
@@ -131,7 +136,7 @@ public class AlarmOrderingIntegrationTest extends BaseIntegrationTest {
             bothStarted.countDown();
 
             if (!release.await(5, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("Timed out waiting for release");
+                throw new IllegalStateException(TIMED_OUT_WAITING_FOR_RELEASE);
             }
 
             return null;

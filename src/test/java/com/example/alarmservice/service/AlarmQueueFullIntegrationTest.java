@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.example.alarmservice.exception.ErrorMessages.TIMED_OUT_WAITING_FOR_RELEASE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -26,6 +27,9 @@ import static org.mockito.Mockito.*;
 })
 public class AlarmQueueFullIntegrationTest extends BaseIntegrationTest {
 
+    public static final String FULL_1 = "FULL-1";
+    public static final String FULL_2 = "FULL-2";
+    public static final String FULL_3 = "FULL-3";
     @MockitoBean
     private NotificationHttpClient httpClient;
 
@@ -51,33 +55,33 @@ public class AlarmQueueFullIntegrationTest extends BaseIntegrationTest {
             started.countDown();
 
             if (!release.await(10, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("Timed out waiting for release");
+                throw new IllegalStateException(TIMED_OUT_WAITING_FOR_RELEASE);
             }
 
             return null;
         }).when(httpClient).send(anyString(), anyString(), any());
 
         try {
-            AlarmIngestionResult first = alarmIngestionService.processAlarm(alarm("FULL-1"));
+            AlarmIngestionResult first = alarmIngestionService.processAlarm(alarm(FULL_1));
 
             assertTrue(first.created());
             assertEquals(NotificationStatus.QUEUED, first.notificationStatus());
 
             assertTrue(started.await(5, TimeUnit.SECONDS));
 
-            AlarmIngestionResult second = alarmIngestionService.processAlarm(alarm("FULL-2"));
+            AlarmIngestionResult second = alarmIngestionService.processAlarm(alarm(FULL_2));
 
             assertTrue(second.created());
             assertEquals(NotificationStatus.QUEUED, second.notificationStatus());
 
-            AlarmIngestionResult third = alarmIngestionService.processAlarm(alarm("FULL-3"));
+            AlarmIngestionResult third = alarmIngestionService.processAlarm(alarm(FULL_3));
 
             assertTrue(third.created());
             assertEquals(NotificationStatus.QUEUE_FULL, third.notificationStatus());
 
-            assertTrue(historyRepository.existsByEventId("FULL-1"));
-            assertTrue(historyRepository.existsByEventId("FULL-2"));
-            assertTrue(historyRepository.existsByEventId("FULL-3"));
+            assertTrue(historyRepository.existsByEventId(FULL_1));
+            assertTrue(historyRepository.existsByEventId(FULL_2));
+            assertTrue(historyRepository.existsByEventId(FULL_3));
 
             assertEquals(3, historyRepository.count());
             assertEquals(1, activeRepository.count());
@@ -97,50 +101,36 @@ public class AlarmQueueFullIntegrationTest extends BaseIntegrationTest {
             started.countDown();
 
             if (!release.await(10, TimeUnit.SECONDS)) {
-                throw new IllegalStateException("Timed out waiting for release");
+                throw new IllegalStateException(TIMED_OUT_WAITING_FOR_RELEASE);
             }
 
             return null;
         }).when(httpClient).send(anyString(), anyString(), any());
 
         try {
-            // First notification occupies the worker.
-            AlarmIngestionResult first =
-                    alarmIngestionService.processAlarm(alarm("FULL-1"));
+            AlarmIngestionResult first = alarmIngestionService.processAlarm(alarm(FULL_1));
 
             assertEquals(NotificationStatus.QUEUED, first.notificationStatus());
             assertTrue(started.await(5, TimeUnit.SECONDS));
 
-            // Second notification occupies the remaining capacity.
-            AlarmIngestionResult second =
-                    alarmIngestionService.processAlarm(alarm("FULL-2"));
+            AlarmIngestionResult second = alarmIngestionService.processAlarm(alarm(FULL_2));
 
             assertEquals(NotificationStatus.QUEUED, second.notificationStatus());
 
-            // Third alarm is persisted, but its notification is skipped.
-            AlarmIngestionResult third =
-                    alarmIngestionService.processAlarm(alarm("FULL-3"));
+            AlarmIngestionResult third = alarmIngestionService.processAlarm(alarm(FULL_3));
 
             assertTrue(third.created());
             assertEquals(NotificationStatus.QUEUE_FULL, third.notificationStatus());
 
-            // Retry the same eventId while the queue is still full.
-            AlarmIngestionResult duplicate =
-                    alarmIngestionService.processAlarm(alarm("FULL-3"));
+            AlarmIngestionResult duplicate = alarmIngestionService.processAlarm(alarm(FULL_3));
 
             assertFalse(duplicate.created());
             assertEquals(NotificationStatus.DUPLICATE, duplicate.notificationStatus());
 
-            // No additional history or active alarm records.
             assertEquals(3, historyRepository.count());
             assertEquals(1, activeRepository.count());
 
-            // The duplicate must not trigger another notification.
-            verify(httpClient, never()).send(
-                    eq("FULL-3"),
-                    anyString(),
-                    any()
-            );
+            verify(httpClient, never()).send(eq(FULL_3), anyString(), any());
 
         } finally {
             release.countDown();
